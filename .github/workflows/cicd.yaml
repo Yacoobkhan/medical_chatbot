@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -34,7 +34,7 @@ jobs:
 
   Continuous-Deployment:
     needs: Continuous-Integration
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Deploy to EC2 via SSH
@@ -44,14 +44,16 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            ECR_REGISTRY=YOUR_ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com
+
             # Login to ECR
             aws ecr get-login-password --region ${{ secrets.AWS_DEFAULT_REGION }} \
-            | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+            | docker login --username AWS --password-stdin $ECR_REGISTRY
 
             # Pull latest image
-            docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPO }}:latest
+            docker pull $ECR_REGISTRY/${{ secrets.ECR_REPO }}:latest
 
-            # Stop and remove old container
+            # Stop old container
             docker stop app || true
             docker rm app || true
 
@@ -59,9 +61,6 @@ jobs:
             docker run -d \
               --name app \
               -p 8080:8080 \
-              -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-              -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
-              -e AWS_DEFAULT_REGION="${{ secrets.AWS_DEFAULT_REGION }}" \
               -e PINECONE_API_KEY="${{ secrets.PINECONE_API_KEY }}" \
               -e COHERE_API_KEY="${{ secrets.COHERE_API_KEY }}" \
-              ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPO }}:latest
+              $ECR_REGISTRY/${{ secrets.ECR_REPO }}:latest
