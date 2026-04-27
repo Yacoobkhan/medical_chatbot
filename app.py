@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 from src.helper import download_hugging_face_embeddings
-from langchain.vectorstores import Pinecone
+from langchain_community.vectorstores import Pinecone
 import pinecone
 from langchain_cohere import ChatCohere
 from langchain.chains import create_retrieval_chain
