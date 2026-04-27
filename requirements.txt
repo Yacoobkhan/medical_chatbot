@@ -33,7 +33,7 @@ langchain-cohere==0.2.4
 langchain-community==0.2.16
 langchain-core==0.2.43
 langchain-experimental==0.0.65
-langchain-pinecone==0.1.3
+langchain-pinecone
 langchain-text-splitters==0.2.4
 langsmith==0.1.147
 MarkupSafe==3.0.3
