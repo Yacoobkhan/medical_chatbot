@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 from src.helper import download_hugging_face_embeddings
-from langchain_pinecone import PineconeVectorStore
+from langchain_pinecone import pinecone
 from langchain_cohere import ChatCohere
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -28,7 +28,7 @@ embeddings = download_hugging_face_embeddings()
 # -------------------- PINECONE --------------------
 index_name = "medicalbot"
 
-docsearch = PineconeVectorStore.from_existing_index(
+docsearch = pinecone.from_existing_index(
     index_name=index_name,
     embedding=embeddings
 )
