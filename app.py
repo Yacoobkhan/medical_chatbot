@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 from src.helper import download_hugging_face_embeddings
-from langchain_pinecone import pinecone
+from langchain.vectorstores import Pinecone
+import pinecone
 from langchain_cohere import ChatCohere
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -22,13 +23,21 @@ COHERE_API_KEY = os.getenv("COHERE_API_KEY")
 os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
 os.environ["COHERE_API_KEY"] = COHERE_API_KEY
 
+
+
 # -------------------- EMBEDDINGS --------------------
 embeddings = download_hugging_face_embeddings()
 
 # -------------------- PINECONE --------------------
+
+pinecone.init(
+    api_key=PINECONE_API_KEY,
+    environment="us-east-1"  # must match your index region
+)
+
 index_name = "medicalbot"
 
-docsearch = pinecone.from_existing_index(
+docsearch = Pinecone.from_existing_index(
     index_name=index_name,
     embedding=embeddings
 )
@@ -87,4 +96,5 @@ def chat():
 
 # -------------------- RUN --------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    PORT = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=PORT, debug=True)
