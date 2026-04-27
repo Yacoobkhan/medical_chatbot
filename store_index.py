@@ -26,9 +26,11 @@ pc = Pinecone(api_key=pinecone_api_key)
 
 
 
-index_name = "medical-chatbot"  # change if desired
+index_name = "medicalbot"  # change if desired
 
-if not pc.has_index(index_name):
+existing_indexes = [index.name for index in pc.list_indexes()]
+
+if index_name not in existing_indexes:
     pc.create_index(
         name=index_name,
         dimension=384,
