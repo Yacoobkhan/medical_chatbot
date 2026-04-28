@@ -81,13 +81,20 @@ def index():
 def chat():
     msg = request.form.get("msg")
 
+    if not msg:
+        return "No input provided"
+
     try:
         response = rag_chain.invoke({"input": msg})
-        answer = response.get("answer", "No response generated.")
+
+        if not response:
+            return "No response from model"
+
+        answer = response.get("answer", "No answer generated")
 
     except Exception as e:
-        print("Error:", str(e))
-        answer = "Sorry, something went wrong. Please try again."
+        print("🔥 ERROR:", str(e))   # IMPORTANT for logs
+        return "Server error: " + str(e)
 
     return str(answer)
 
