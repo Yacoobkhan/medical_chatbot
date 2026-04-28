@@ -2,18 +2,20 @@ from flask import Flask, render_template, request
 from dotenv import load_dotenv
 import os
 
-# LangChain + AI
+# LangChain
 from langchain_cohere import ChatCohere
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.vectorstores import Pinecone as PineconeStore
 
-# Pinecone NEW SDK
+# HuggingFace API (NOT local)
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+
+# Pinecone
 from pinecone import Pinecone
 
-# Custom files
-from src.helper import download_hugging_face_embeddings
+# Custom
 from src.prompt import system_prompt
 
 # -------------------- INIT --------------------
@@ -23,22 +25,23 @@ load_dotenv()
 # -------------------- ENV --------------------
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 COHERE_API_KEY = os.getenv("COHERE_API_KEY")
+HF_API_KEY = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
 if not PINECONE_API_KEY:
-    raise ValueError("❌ Missing PINECONE_API_KEY")
+    raise ValueError("Missing PINECONE_API_KEY")
 
 if not COHERE_API_KEY:
-    raise ValueError("❌ Missing COHERE_API_KEY")
+    raise ValueError("Missing COHERE_API_KEY")
 
-# -------------------- EMBEDDINGS (LAZY LOAD) --------------------
-embeddings = None
+if not HF_API_KEY:
+    raise ValueError("Missing HUGGINGFACEHUB_API_TOKEN")
 
+# -------------------- EMBEDDINGS (API BASED) --------------------
 def get_embeddings():
-    global embeddings
-    if embeddings is None:
-        print("🔄 Loading embeddings model...")
-        embeddings = download_hugging_face_embeddings()
-    return embeddings
+    return HuggingFaceInferenceAPIEmbeddings(
+        api_key=HF_API_KEY,
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
 
 # -------------------- PINECONE --------------------
 pc = Pinecone(api_key=PINECONE_API_KEY)
@@ -70,23 +73,22 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-# -------------------- CHAINS --------------------
+# -------------------- CHAIN --------------------
 def get_rag_chain():
     retriever = get_retriever()
 
-    question_answer_chain = create_stuff_documents_chain(
+    qa_chain = create_stuff_documents_chain(
         chatModel, prompt
     )
 
     return create_retrieval_chain(
-        retriever, question_answer_chain
+        retriever, qa_chain
     )
 
 # -------------------- ROUTES --------------------
 @app.route("/")
 def index():
     return render_template("chat.html")
-
 
 @app.route("/get", methods=["POST"])
 def chat():
@@ -101,7 +103,7 @@ def chat():
         response = rag_chain.invoke({"input": msg})
 
         if not response:
-            return "No response from model"
+            return "No response"
 
         answer = response.get("answer", "No answer generated")
 
