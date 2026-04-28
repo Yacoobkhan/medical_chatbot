@@ -1,43 +1,43 @@
 from flask import Flask, render_template, request
-from src.helper import download_hugging_face_embeddings
-from langchain_community.vectorstores import Pinecone
-import pinecone
+from dotenv import load_dotenv
+import os
+
+# LangChain + AI
 from langchain_cohere import ChatCohere
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
-from dotenv import load_dotenv
+from langchain_community.vectorstores import Pinecone as PineconeStore
+
+# Pinecone NEW SDK
+from pinecone import Pinecone
+
+# Custom files
+from src.helper import download_hugging_face_embeddings
 from src.prompt import system_prompt
-import os
 
 # -------------------- INIT --------------------
 app = Flask(__name__)
 
 load_dotenv()
 
-# Load API Keys
+# API Keys
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 COHERE_API_KEY = os.getenv("COHERE_API_KEY")
-
-# Set environment variables
-os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
-os.environ["COHERE_API_KEY"] = COHERE_API_KEY
-
-
 
 # -------------------- EMBEDDINGS --------------------
 embeddings = download_hugging_face_embeddings()
 
-# -------------------- PINECONE --------------------
-
-pinecone.init(
-    api_key=PINECONE_API_KEY,
-    environment="us-east-1"  # must match your index region
-)
+# -------------------- PINECONE (NEW SDK) --------------------
+pc = Pinecone(api_key=PINECONE_API_KEY)
 
 index_name = "medicalbot"
 
-docsearch = Pinecone.from_existing_index(
+# Connect to existing index
+index = pc.Index(index_name)
+
+# LangChain wrapper
+docsearch = PineconeStore.from_existing_index(
     index_name=index_name,
     embedding=embeddings
 )
@@ -50,7 +50,7 @@ retriever = docsearch.as_retriever(
 # -------------------- LLM (COHERE) --------------------
 chatModel = ChatCohere(
     cohere_api_key=COHERE_API_KEY,
-    model="c4ai-aya-expanse-32b",   # or "command-r-plus"
+    model="command-r-plus",   # stable model
     temperature=0.5
 )
 
@@ -79,22 +79,20 @@ def index():
 
 @app.route("/get", methods=["POST"])
 def chat():
-    msg = request.form["msg"]
-    print("User:", msg)
+    msg = request.form.get("msg")
 
     try:
         response = rag_chain.invoke({"input": msg})
-        answer = response["answer"]
+        answer = response.get("answer", "No response generated.")
 
     except Exception as e:
         print("Error:", str(e))
         answer = "Sorry, something went wrong. Please try again."
 
-    print("Bot:", answer)
     return str(answer)
 
 
 # -------------------- RUN --------------------
 if __name__ == "__main__":
-    PORT = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=PORT, debug=True)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)

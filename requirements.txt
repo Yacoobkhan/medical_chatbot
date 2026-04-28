@@ -1,82 +1,41 @@
-aiohappyeyeballs==2.6.1
-aiohttp==3.13.5
-aiosignal==1.4.0
-annotated-types==0.7.0
-anyio==4.13.0
-attrs==26.1.0
-blinker==1.9.0
-certifi==2026.4.22
-charset-normalizer==3.4.7
-click==8.3.3
-cohere==5.21.1
-colorama==0.4.6
-dataclasses-json==0.6.7
-fastavro==1.12.2
-filelock==3.29.0
+# Core web
 Flask==3.1.1
-frozenlist==1.8.0
-fsspec==2026.3.0
-greenlet==3.4.0
-gunicorn==25.3.0
-h11==0.16.0
-httpcore==1.0.9
-httpx==0.28.1
-huggingface_hub==0.36.2
-idna==3.13
-itsdangerous==2.2.0
-Jinja2==3.1.6
-joblib==1.5.3
-jsonpatch==1.33
-jsonpointer==3.1.1
+gunicorn==21.2.0
+python-dotenv==1.0.1
+
+# LangChain ecosystem (stable combo)
 langchain==0.2.16
-langchain-cohere==0.2.4
 langchain-community==0.2.16
 langchain-core==0.2.43
-langchain-experimental==0.0.65
 langchain-text-splitters==0.2.4
-langsmith==0.1.147
-MarkupSafe==3.0.3
-marshmallow==3.26.2
-mpmath==1.3.0
-multidict==6.7.1
-mypy_extensions==1.1.0
-networkx==3.3
-numpy==1.26.4
-orjson==3.11.8
-packaging==24.2
-pandas==2.2.2
-pillow==12.2.0
-pinecone-client==2.2.4
-propcache==0.4.1
-pydantic==2.13.3
-pydantic_core==2.46.3
-pypdf==5.6.1
-python-dateutil==2.9.0.post0
-python-dotenv==1.1.0
-PyYAML==6.0.3
-regex==2026.4.4
-requests==2.33.1
-requests-toolbelt==1.0.0
-safetensors==0.7.0
-scikit-learn==1.3.2
-scipy==1.11.4
+
+# Embeddings / LLM
 sentence-transformers==2.6.1
-setuptools==69.5.1
-six==1.17.0
-SQLAlchemy==2.0.49
-sympy==1.14.0
-tabulate==0.9.0
-tenacity==8.5.0
-threadpoolctl==3.6.0
-tokenizers==0.19.1
-torch==2.1.2
-tqdm==4.67.3
 transformers==4.41.2
-types-requests==2.33.0.20260408
-typing-inspect==0.9.0
-typing-inspection==0.4.2
-typing_extensions==4.15.0
-tzdata==2026.2
-urllib3==2.6.3
-Werkzeug==3.1.8
-yarl==1.23.0
+torch==2.1.2
+
+# Pinecone (NEW SDK ✅)
+pinecone==5.0.1
+
+# HuggingFace integration (updated)
+langchain-huggingface==0.0.3
+huggingface_hub==0.23.4
+
+# Data + utilities
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.3.2
+
+# HTTP / async (LangChain deps)
+requests==2.31.0
+httpx==0.27.0
+aiohttp==3.9.5
+
+# Parsing / docs
+pypdf==4.2.0
+
+# Validation
+pydantic==2.7.4
+
+# Optional but safe
+tqdm==4.66.4
