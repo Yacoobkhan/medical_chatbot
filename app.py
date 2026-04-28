@@ -18,39 +18,47 @@ from src.prompt import system_prompt
 
 # -------------------- INIT --------------------
 app = Flask(__name__)
-
 load_dotenv()
 
-# API Keys
+# -------------------- ENV --------------------
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 COHERE_API_KEY = os.getenv("COHERE_API_KEY")
 
-# -------------------- EMBEDDINGS --------------------
-embeddings = download_hugging_face_embeddings()
+if not PINECONE_API_KEY:
+    raise ValueError("❌ Missing PINECONE_API_KEY")
 
-# -------------------- PINECONE (NEW SDK) --------------------
+if not COHERE_API_KEY:
+    raise ValueError("❌ Missing COHERE_API_KEY")
+
+# -------------------- EMBEDDINGS (LAZY LOAD) --------------------
+embeddings = None
+
+def get_embeddings():
+    global embeddings
+    if embeddings is None:
+        print("🔄 Loading embeddings model...")
+        embeddings = download_hugging_face_embeddings()
+    return embeddings
+
+# -------------------- PINECONE --------------------
 pc = Pinecone(api_key=PINECONE_API_KEY)
-
 index_name = "medicalbot"
 
-# Connect to existing index
-index = pc.Index(index_name)
+def get_retriever():
+    docsearch = PineconeStore.from_existing_index(
+        index_name=index_name,
+        embedding=get_embeddings()
+    )
 
-# LangChain wrapper
-docsearch = PineconeStore.from_existing_index(
-    index_name=index_name,
-    embedding=embeddings
-)
+    return docsearch.as_retriever(
+        search_type="similarity",
+        search_kwargs={"k": 3}
+    )
 
-retriever = docsearch.as_retriever(
-    search_type="similarity",
-    search_kwargs={"k": 3}
-)
-
-# -------------------- LLM (COHERE) --------------------
+# -------------------- LLM --------------------
 chatModel = ChatCohere(
     cohere_api_key=COHERE_API_KEY,
-    model="command-r-plus",   # stable model
+    model="command-r-plus",
     temperature=0.5
 )
 
@@ -63,13 +71,16 @@ prompt = ChatPromptTemplate.from_messages(
 )
 
 # -------------------- CHAINS --------------------
-question_answer_chain = create_stuff_documents_chain(
-    chatModel, prompt
-)
+def get_rag_chain():
+    retriever = get_retriever()
 
-rag_chain = create_retrieval_chain(
-    retriever, question_answer_chain
-)
+    question_answer_chain = create_stuff_documents_chain(
+        chatModel, prompt
+    )
+
+    return create_retrieval_chain(
+        retriever, question_answer_chain
+    )
 
 # -------------------- ROUTES --------------------
 @app.route("/")
@@ -85,6 +96,8 @@ def chat():
         return "No input provided"
 
     try:
+        rag_chain = get_rag_chain()
+
         response = rag_chain.invoke({"input": msg})
 
         if not response:
@@ -93,11 +106,10 @@ def chat():
         answer = response.get("answer", "No answer generated")
 
     except Exception as e:
-        print("🔥 ERROR:", str(e))   # IMPORTANT for logs
+        print("🔥 ERROR:", str(e))
         return "Server error: " + str(e)
 
     return str(answer)
-
 
 # -------------------- RUN --------------------
 if __name__ == "__main__":
