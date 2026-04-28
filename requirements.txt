@@ -46,7 +46,7 @@ orjson==3.11.8
 packaging==24.2
 pandas==2.2.2
 pillow==12.2.0
-pinecone-client==3.2.2
+pinecone-client==2.2.4
 propcache==0.4.1
 pydantic==2.13.3
 pydantic_core==2.46.3
