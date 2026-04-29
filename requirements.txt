@@ -1,8 +1,7 @@
-# Core web
-Flask==3.1.1
-gunicorn==21.2.0
-python-dotenv==1.0.1
+flask==3.1.1
+python-dotenv==1.1.0
 
+<<<<<<< HEAD
 # LangChain ecosystem
 langchain==0.2.16
 langchain-community==0.2.16
@@ -26,3 +25,15 @@ pydantic==2.7.4
 
 # Optional
 tqdm==4.66.4
+=======
+langchain==0.3.26
+langchain-community==0.3.26
+langchain-openai==0.3.24
+langchain-pinecone==0.2.8
+langchain-cohere==0.3.1
+
+pinecone==6.0.0
+
+sentence-transformers==4.1.0
+pypdf==5.6.1
+>>>>>>> 9a3af5e (model fix)

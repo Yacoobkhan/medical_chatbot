@@ -2,66 +2,56 @@ from flask import Flask, render_template, request
 from dotenv import load_dotenv
 import os
 
-# LangChain
+# LangChain + AI
 from langchain_cohere import ChatCohere
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_community.vectorstores import Pinecone as PineconeStore
+# from langchain_community.vectorstores import Pinecone as PineconeStore
+from langchain_pinecone import PineconeVectorStore
 
-# HuggingFace API (NOT local)
-from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
-
-# Pinecone
+# Pinecone NEW SDK
 from pinecone import Pinecone
 
-# Custom
+# Custom files
+from src.helper import download_hugging_face_embeddings
 from src.prompt import system_prompt
 
 # -------------------- INIT --------------------
 app = Flask(__name__)
+
 load_dotenv()
 
-# -------------------- ENV --------------------
+# API Keys
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 COHERE_API_KEY = os.getenv("COHERE_API_KEY")
-HF_API_KEY = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-if not PINECONE_API_KEY:
-    raise ValueError("Missing PINECONE_API_KEY")
+# -------------------- EMBEDDINGS --------------------
+embeddings = download_hugging_face_embeddings()
 
-if not COHERE_API_KEY:
-    raise ValueError("Missing COHERE_API_KEY")
-
-if not HF_API_KEY:
-    raise ValueError("Missing HUGGINGFACEHUB_API_TOKEN")
-
-# -------------------- EMBEDDINGS (API BASED) --------------------
-def get_embeddings():
-    return HuggingFaceInferenceAPIEmbeddings(
-        api_key=HF_API_KEY,
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
-
-# -------------------- PINECONE --------------------
+# -------------------- PINECONE (NEW SDK) --------------------
 pc = Pinecone(api_key=PINECONE_API_KEY)
+
 index_name = "medicalbot"
 
-def get_retriever():
-    docsearch = PineconeStore.from_existing_index(
-        index_name=index_name,
-        embedding=get_embeddings()
-    )
+# Connect to existing index
+index = pc.Index(index_name)
 
-    return docsearch.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": 3}
-    )
+# LangChain wrapper
+docsearch = PineconeVectorStore(
+    index=index,
+    embedding=embeddings
+)
 
-# -------------------- LLM --------------------
+retriever = docsearch.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k": 5}
+)
+
+# -------------------- LLM (COHERE) --------------------
 chatModel = ChatCohere(
     cohere_api_key=COHERE_API_KEY,
-    model="command-r-plus",
+    model="command-r-08-2024",   # stable model
     temperature=0.5
 )
 
@@ -73,45 +63,35 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-# -------------------- CHAIN --------------------
-def get_rag_chain():
-    retriever = get_retriever()
+# -------------------- CHAINS --------------------
+question_answer_chain = create_stuff_documents_chain(
+    chatModel, prompt
+)
 
-    qa_chain = create_stuff_documents_chain(
-        chatModel, prompt
-    )
-
-    return create_retrieval_chain(
-        retriever, qa_chain
-    )
+rag_chain = create_retrieval_chain(
+    retriever, question_answer_chain
+)
 
 # -------------------- ROUTES --------------------
 @app.route("/")
 def index():
     return render_template("chat.html")
 
+
 @app.route("/get", methods=["POST"])
 def chat():
     msg = request.form.get("msg")
 
-    if not msg:
-        return "No input provided"
-
     try:
-        rag_chain = get_rag_chain()
-
         response = rag_chain.invoke({"input": msg})
-
-        if not response:
-            return "No response"
-
-        answer = response.get("answer", "No answer generated")
+        answer = response.get("answer", "No response generated.")
 
     except Exception as e:
-        print("🔥 ERROR:", str(e))
-        return "Server error: " + str(e)
+        print("Error:", str(e))
+        answer = "Sorry, something went wrong. Please try again."
 
     return str(answer)
+
 
 # -------------------- RUN --------------------
 if __name__ == "__main__":
