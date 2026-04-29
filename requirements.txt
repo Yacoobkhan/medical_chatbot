@@ -1,31 +1,6 @@
 flask==3.1.1
 python-dotenv==1.1.0
 
-<<<<<<< HEAD
-# LangChain ecosystem
-langchain==0.2.16
-langchain-community==0.2.16
-langchain-core==0.2.43
-langchain-text-splitters==0.2.4
-langchain-cohere==0.2.4
-
-# Pinecone (new SDK)
-pinecone==5.0.1
-
-# HuggingFace API (lightweight)
-huggingface_hub==0.23.4
-
-# HTTP deps
-requests==2.31.0
-httpx==0.27.0
-aiohttp==3.9.5
-
-# Validation
-pydantic==2.7.4
-
-# Optional
-tqdm==4.66.4
-=======
 langchain==0.3.26
 langchain-community==0.3.26
 langchain-openai==0.3.24
@@ -36,4 +11,3 @@ pinecone==6.0.0
 
 sentence-transformers==4.1.0
 pypdf==5.6.1
->>>>>>> 9a3af5e (model fix)
