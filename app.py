@@ -14,7 +14,8 @@ from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone
 
 # Custom files
-from src.helper import download_hugging_face_embeddings
+# from src.helper import download_hugging_face_embeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from src.prompt import system_prompt
 
 # -------------------- INIT --------------------
@@ -27,7 +28,10 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 COHERE_API_KEY = os.getenv("COHERE_API_KEY")
 
 # -------------------- EMBEDDINGS --------------------
-embeddings = download_hugging_face_embeddings()
+# embeddings = download_hugging_face_embeddings()
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 
 # -------------------- PINECONE (NEW SDK) --------------------
 pc = Pinecone(api_key=PINECONE_API_KEY)
@@ -35,11 +39,16 @@ pc = Pinecone(api_key=PINECONE_API_KEY)
 index_name = "medicalbot"
 
 # Connect to existing index
-index = pc.Index(index_name)
+# index = pc.Index(index_name)
 
-# LangChain wrapper
-docsearch = PineconeVectorStore(
-    index=index,
+# # LangChain wrapper
+# docsearch = PineconeVectorStore(
+#     index=index,
+#     embedding=embeddings
+# )
+
+docsearch = PineconeVectorStore.from_existing_index(
+    index_name=index_name,
     embedding=embeddings
 )
 

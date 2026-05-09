@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 import os
-from src.helper import load_pdf_file, filter_to_minimal_docs, text_split, download_hugging_face_embeddings
+from src.helper import load_pdf_file, filter_to_minimal_docs, text_split
+#download_hugging_face_embeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from pinecone import Pinecone
 from pinecone import ServerlessSpec 
 from langchain_pinecone import PineconeVectorStore
@@ -19,7 +21,11 @@ extracted_data=load_pdf_file(data='data/')
 filter_data = filter_to_minimal_docs(extracted_data)
 text_chunks=text_split(filter_data)
 
-embeddings = download_hugging_face_embeddings()
+# embeddings = download_hugging_face_embeddings()
+
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 
 pinecone_api_key = PINECONE_API_KEY
 pc = Pinecone(api_key=pinecone_api_key)
@@ -38,7 +44,7 @@ if index_name not in existing_indexes:
         spec=ServerlessSpec(cloud="aws", region="us-east-1"),
     )
 
-index = pc.Index(index_name)
+# index = pc.Index(index_name)
 
 
 docsearch = PineconeVectorStore.from_documents(
