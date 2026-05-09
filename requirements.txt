@@ -6,7 +6,6 @@ langchain-community==0.3.26
 langchain-openai==0.3.24
 langchain-pinecone==0.2.8
 langchain-cohere==0.3.1
-langchain-huggingface
 pinecone==6.0.0
 
 sentence-transformers==4.1.0
