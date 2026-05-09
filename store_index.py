@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 from src.helper import load_pdf_file, filter_to_minimal_docs, text_split
 #download_hugging_face_embeddings
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from pinecone import Pinecone
 from pinecone import ServerlessSpec 
 from langchain_pinecone import PineconeVectorStore

@@ -15,7 +15,7 @@ from pinecone import Pinecone
 
 # Custom files
 # from src.helper import download_hugging_face_embeddings
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from src.prompt import system_prompt
 
 # -------------------- INIT --------------------
